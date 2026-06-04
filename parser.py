@@ -23,17 +23,6 @@ def setup_nlp():
         except LookupError:
             print(f"Downloading NLTK resource '{res_name}'...")
             nltk.download(res_name, quiet=True)
-
-    # spaCy model check
-    try:
-        spacy.load('en_core_web_sm')
-        print("spaCy 'en_core_web_sm' model is already installed.")
-    except OSError:
-        print("Downloading spaCy 'en_core_web_sm' model...")
-        import subprocess
-        import sys
-        subprocess.run([sys.executable, "-m", "spacy", "download", "en_core_web_sm"], check=True)
-
 # Run NLP setup on initialization
 setup_nlp()
 

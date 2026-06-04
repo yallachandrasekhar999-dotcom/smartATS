@@ -11,3 +11,4 @@ reportlab==4.2.0
 cryptography==42.0.7
 pymysql==1.1.0
 gunicorn==23.0.0
+https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.7.1/en_core_web_sm-3.7.1-py3-none-any.whl
