@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+{% block title %}Smart ATS - Job Recommendations{% endblock %}
+
+{% block header_title %}Job Matches{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-6 animate-fade-in-up">
+    
+    <div class="glass-panel p-6">
+        <h3 class="font-bold text-lg text-white">Custom Skill-Based Job Openings</h3>
+        <p class="text-xs text-slate-400">Recommended job postings analyzed against your parsed skills directory profiles.</p>
+    </div>
+
+    {% if not has_resume %}
+    <div class="glass-panel p-12 text-center space-y-4">
+        <div class="w-16 h-16 bg-slate-900 rounded-full flex items-center justify-center mx-auto border border-slate-800 text-slate-500">
+            <i class="fas fa-briefcase text-2xl"></i>
+        </div>
+        <div>
+            <p class="font-semibold text-slate-300">No profile skills catalog found</p>
+            <p class="text-xs text-slate-500 max-w-sm mx-auto">Please upload your resume in the Analyzer dashboard first. The algorithm will automatically parse and recommend jobs matching your specific credentials.</p>
+        </div>
+        <a href="{{ url_for('analyze_resume_route') }}" class="glass-panel inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 border-none font-semibold text-white rounded-lg text-xs transition">
+            <i class="fas fa-upload"></i> Analyze Resume
+        </a>
+    </div>
+    {% else %}
+        
+        {% if recommendations %}
+        <div class="space-y-4">
+            {% for rec in recommendations %}
+            <div class="glass-panel p-6 space-y-4">
+                <!-- Header details -->
+                <div class="flex items-start justify-between flex-wrap gap-3">
+                    <div>
+                        <h4 class="text-lg font-bold text-white">{{ rec.title }}</h4>
+                        <p class="text-xs font-semibold text-indigo-400">{{ rec.company }} &bull; <span class="text-slate-400 font-normal">{{ rec.location }}</span></p>
+                    </div>
+                    
+                    <div class="text-right">
+                        <span class="px-3 py-1.5 rounded-full text-xs font-bold font-sans bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                            {{ rec.match_score }}% Match
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Description brief -->
+                <p class="text-xs text-slate-400 leading-relaxed">{{ rec.description }}</p>
+
+                <!-- Skill Matching checklist -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-3 border-t border-slate-800/40 text-xs">
+                    <!-- Matched -->
+                    <div class="space-y-1.5">
+                        <span class="text-slate-500 font-semibold"><i class="fas fa-circle-check text-emerald-400 mr-1.5"></i> Skills You Have ({{ rec.matched_skills | length }}):</span>
+                        <div class="flex flex-wrap gap-1.5">
+                            {% for skill in rec.matched_skills %}
+                            <span class="matched-pill px-2 py-0.5 rounded text-[10px]">{{ skill }}</span>
+                            {% endfor %}
+                            {% if not rec.matched_skills %}
+                            <span class="text-slate-500 italic">None matched.</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Missing -->
+                    <div class="space-y-1.5">
+                        <span class="text-slate-500 font-semibold"><i class="fas fa-triangle-exclamation text-amber-500 mr-1.5"></i> Skills to Learn ({{ rec.missing_skills | length }}):</span>
+                        <div class="flex flex-wrap gap-1.5">
+                            {% for skill in rec.missing_skills %}
+                            <span class="missing-pill px-2 py-0.5 rounded text-[10px]">{{ skill }}</span>
+                            {% endfor %}
+                            {% if not rec.missing_skills %}
+                            <span class="text-emerald-400 font-semibold">Match complete!</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="flex justify-end pt-2">
+                    <a href="{{ rec.url }}" target="_blank" class="glass-panel px-4 py-2 bg-slate-800 hover:bg-slate-700/80 text-slate-200 text-xs font-semibold rounded-lg transition flex items-center gap-1.5 border-slate-700/60">
+                        Apply External <i class="fas fa-external-link-alt text-[10px]"></i>
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="glass-panel p-12 text-center text-slate-500 text-xs italic">
+            No matching jobs in our system database catalog fit your skills yet. Check back later!
+        </div>
+        {% endif %}
+        
+    {% endif %}
+
+</div>
+{% endblock %}

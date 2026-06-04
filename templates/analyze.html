@@ -1,0 +1,338 @@
+{% extends "base.html" %}
+
+{% block title %}Smart ATS - Analyze Resume{% endblock %}
+
+{% block header_title %}Resume Match Analyzer{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto space-y-6 animate-fade-in-up">
+    
+    {% if not report %}
+    <!-- Input Phase: Upload Form -->
+    <div class="glass-panel p-6 max-w-3xl mx-auto space-y-6">
+        <div>
+            <h3 class="font-bold text-lg text-white">Upload Resume & Paste Job Description</h3>
+            <p class="text-xs text-slate-400">Match your resume's skills, structure, and keywords against exact requirements.</p>
+        </div>
+
+        <form action="{{ url_for('analyze_resume_route') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
+            <!-- File Uploader Drag and Drop -->
+            <div class="space-y-2">
+                <label class="text-xs font-semibold text-slate-300">Resume Document (PDF or DOCX)</label>
+                
+                {% if select_resumes %}
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
+                    <div class="md:col-span-2">
+                {% endif %}
+                
+                <div id="drop-zone" class="upload-zone py-8 px-4 rounded-xl text-center border-2 border-dashed border-indigo-500/30 bg-indigo-500/5 hover:bg-indigo-500/10 cursor-pointer relative transition">
+                    <input type="file" id="resume-file" name="resume_file" accept=".pdf,.docx" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full">
+                    <div class="space-y-3">
+                        <div class="w-12 h-12 rounded-xl bg-indigo-500/10 flex items-center justify-center mx-auto text-indigo-400">
+                            <i class="fas fa-cloud-upload-alt text-xl"></i>
+                        </div>
+                        <p class="text-xs text-slate-300" id="file-label-text">
+                            <span class="text-indigo-400 font-semibold hover:underline">Click to browse</span> or drag and drop your file here
+                        </p>
+                        <p class="text-[10px] text-slate-500">Supports PDF & DOCX up to 16MB</p>
+                    </div>
+                </div>
+
+                {% if select_resumes %}
+                    </div>
+                    <div class="text-center text-slate-500 text-xs font-bold font-sans">OR SELECT EXISTING</div>
+                    <div>
+                        <select name="existing_resume_id" class="glass-input p-2.5 w-full text-xs cursor-pointer">
+                            <option value="">-- Choose past upload --</option>
+                            {% for res in select_resumes %}
+                                <option value="{{ res.id }}">{{ res.filename }} (v{{ res.version }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Job Description -->
+            <div class="space-y-2">
+                <div class="flex items-center justify-between">
+                    <label for="job-desc" class="text-xs font-semibold text-slate-300">Job Description Requirements</label>
+                    
+                    <!-- Preseeded JDs Dropdown helper -->
+                    {% if sample_jobs %}
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-[10px] text-slate-500">Auto-fill sample:</span>
+                        <select id="sample-job-select" class="glass-input px-2 py-0.5 text-[10px] bg-slate-900 border-slate-800 text-slate-300 cursor-pointer" 
+                                onchange="if(this.value) { document.getElementById('job-desc').value = this.value; }">
+                            <option value="">-- Select template --</option>
+                            {% for job in sample_jobs %}
+                            <option value="{{ job.description }}">{{ job.title }} ({{ job.company }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% endif %}
+                </div>
+                <textarea id="job-desc" name="job_description" rows="7" required class="glass-input p-3 w-full text-sm leading-relaxed" placeholder="Paste the job description details here, including responsibilities, requirements, technologies, and educational qualifications..."></textarea>
+            </div>
+
+            <!-- Version Checkbox -->
+            <div class="flex items-center gap-2">
+                <input type="checkbox" id="track-version" name="track_version" checked class="w-4 h-4 text-indigo-600 bg-slate-950 border-slate-800 rounded focus:ring-indigo-500 focus:ring-2 focus:ring-offset-slate-900 cursor-pointer">
+                <label for="track-version" class="text-xs text-slate-400 select-none cursor-pointer">Increment resume version number if re-uploading the same file name</label>
+            </div>
+
+            <button type="submit" class="glass-panel w-full py-3 bg-indigo-600 hover:bg-indigo-500 border-none font-bold text-white transition text-sm rounded-lg shadow-lg shadow-indigo-600/25 flex items-center justify-center gap-2">
+                <i class="fas fa-calculator"></i> Run ATS Match Predictor
+            </button>
+        </form>
+    </div>
+
+    {% else %}
+    <!-- Output Phase: Result Details Dashboard -->
+    
+    <!-- Top Action bar -->
+    <div class="flex items-center justify-between glass-panel p-4 flex-wrap gap-3">
+        <div class="flex items-center gap-3">
+            <a href="{{ url_for('analyze_resume_route') }}" class="p-2 bg-slate-800 hover:bg-slate-700/80 rounded-lg text-slate-400 hover:text-white transition" title="Back to upload form">
+                <i class="fas fa-arrow-left"></i>
+            </a>
+            <div>
+                <h3 class="font-bold text-sm text-slate-200">Analysis Result: {{ resume.filename }}</h3>
+                <p class="text-[10px] text-slate-400 font-mono">Matched against: {{ report.job_description.title or 'Custom JD' }} (v{{ resume.version }})</p>
+            </div>
+        </div>
+        
+        <div class="flex items-center gap-2.5">
+            <a href="{{ url_for('download_pdf_report', report_id=report.id) }}" class="glass-panel px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 border-none text-white text-xs font-bold rounded-lg transition shadow-lg shadow-emerald-600/25 flex items-center gap-1.5">
+                <i class="fas fa-file-pdf"></i> Download PDF Report
+            </a>
+            <a href="{{ url_for('analyze_resume_route') }}" class="glass-panel px-4 py-2.5 bg-slate-800 hover:bg-slate-700/80 border-slate-700/60 text-slate-300 text-xs font-bold rounded-lg transition flex items-center gap-1.5">
+                <i class="fas fa-rotate-left"></i> Match Another
+            </a>
+        </div>
+    </div>
+
+    <!-- Main Results Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        
+        <!-- LEFT COLUMN: Scores, Profile structure (size = 5) -->
+        <div class="lg:col-span-5 space-y-6">
+            <!-- Score Gauge panel -->
+            <div class="glass-panel p-5 text-center space-y-4">
+                <h4 class="font-bold text-xs text-slate-400 uppercase tracking-widest">Aggregate ATS Score</h4>
+                
+                <div class="relative w-48 h-28 mx-auto flex items-end justify-center overflow-hidden">
+                    <canvas id="atsScoreGauge" data-score="{{ report.score }}"></canvas>
+                    <div class="absolute bottom-0 text-center space-y-1">
+                        <span class="text-4xl font-extrabold text-white">{{ report.score }}%</span>
+                        <p class="text-[10px] uppercase font-bold tracking-wider {% if report.score >= 80 %}text-emerald-400{% elif report.score >= 50 %}text-amber-400{% else %}text-rose-400{% endif %}">
+                            {{ report.category }} Fit
+                        </p>
+                    </div>
+                </div>
+
+                <p class="text-xs text-slate-400 px-4 leading-relaxed">
+                    {% if report.score >= 90 %}
+                        Excellent alignment! Your resume is highly optimized for this position.
+                    {% elif report.score >= 75 %}
+                        Good match. A few strategic keyword improvements can push you into top consideration.
+                    {% elif report.score >= 50 %}
+                        Average match. Your skills overlap is decent, but missing key credentials/skills.
+                    {% else %}
+                        Needs significant improvement. Core technologies and profile modules are missing.
+                    {% endif %}
+                </p>
+            </div>
+
+            <!-- Breakdown Points chart panel -->
+            <div class="glass-panel p-5 space-y-4">
+                <h4 class="font-bold text-xs text-slate-400 uppercase tracking-widest">Scoring Points breakdown</h4>
+                <div class="h-44 relative">
+                    <canvas id="atsBreakdownChart" 
+                            data-skills="{{ report.suggestions.get('breakdown', {}).get('skills', (report.score * 0.6) | round(1)) }}" 
+                            data-keywords="{{ report.suggestions.get('breakdown', {}).get('keywords', (report.score * 0.2) | round(1)) }}" 
+                            data-structure="{{ report.suggestions.get('breakdown', {}).get('structure', 10) }}" 
+                            data-contact="{{ report.suggestions.get('breakdown', {}).get('contact', 10) }}"></canvas>
+                </div>
+            </div>
+
+            <!-- Extracted Metadata panel -->
+            <div class="glass-panel p-5 space-y-4">
+                <h4 class="font-bold text-xs text-slate-400 uppercase tracking-widest flex items-center justify-between">
+                    <span>Parsed Contact Profile</span>
+                    <span class="text-[10px] lowercase font-normal italic text-slate-500">Heuristics/NER</span>
+                </h4>
+                
+                <div class="space-y-3.5 text-xs text-slate-300">
+                    <div class="flex items-center justify-between p-2.5 bg-slate-900/30 rounded-lg border border-slate-800/80">
+                        <span class="text-slate-500"><i class="far fa-user mr-2"></i> Name:</span>
+                        <span class="font-semibold text-white">{{ resume.parsed_name or 'Not Found' }}</span>
+                    </div>
+                    <div class="flex items-center justify-between p-2.5 bg-slate-900/30 rounded-lg border border-slate-800/80">
+                        <span class="text-slate-500"><i class="far fa-envelope mr-2"></i> Email:</span>
+                        <span class="font-semibold text-white truncate max-w-[200px]" title="{{ resume.parsed_email or 'Not Found' }}">{{ resume.parsed_email or 'Not Found' }}</span>
+                    </div>
+                    <div class="flex items-center justify-between p-2.5 bg-slate-900/30 rounded-lg border border-slate-800/80">
+                        <span class="text-slate-500"><i class="fas fa-phone-alt mr-2"></i> Phone:</span>
+                        <span class="font-semibold text-white">{{ resume.parsed_phone or 'Not Found' }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT COLUMN: Skill Gap Analysis & AI Suggestions (size = 7) -->
+        <div class="lg:col-span-7 space-y-6">
+            
+            <!-- Skill Gap Analysis card -->
+            <div class="glass-panel p-5 space-y-5">
+                <h4 class="font-bold text-slate-200 text-sm flex items-center gap-2">
+                    <i class="fas fa-code-branch text-indigo-400"></i> Skill Gap Analysis
+                </h4>
+                
+                <div class="space-y-4">
+                    <!-- Matched skills -->
+                    <div class="space-y-2">
+                        <span class="text-xs font-semibold text-emerald-400 flex items-center gap-1.5">
+                            <i class="fas fa-check-circle"></i> Matched Skills ({{ report.matched_skills | length }})
+                        </span>
+                        {% if report.matched_skills %}
+                        <div class="flex flex-wrap gap-2">
+                            {% for skill in report.matched_skills %}
+                            <span class="matched-pill px-2.5 py-1 text-xs rounded-lg font-medium">{{ skill }}</span>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <p class="text-xs text-slate-500 italic">No exact skills matched yet.</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Missing skills -->
+                    <div class="space-y-2">
+                        <span class="text-xs font-semibold text-rose-400 flex items-center gap-1.5">
+                            <i class="fas fa-times-circle"></i> Missing Skills ({{ report.missing_skills | length }})
+                        </span>
+                        {% if report.missing_skills %}
+                        <div class="flex flex-wrap gap-2">
+                            {% for skill in report.missing_skills %}
+                            <span class="missing-pill px-2.5 py-1 text-xs rounded-lg font-medium">{{ skill }}</span>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <p class="text-xs text-emerald-400 font-semibold italic flex items-center gap-1">
+                            <i class="fas fa-check-double"></i> All required job description skills found!
+                        </p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI Job Alignment Strategy Guide -->
+            {% if alignment_advice %}
+            <div class="glass-panel p-5 space-y-4">
+                <h4 class="font-bold text-slate-200 text-sm flex items-center gap-2">
+                    <i class="fas fa-route text-indigo-400"></i> AI Target Job Alignment Strategy
+                </h4>
+                <p class="text-xs text-slate-400 leading-normal">
+                    Custom recommendations explaining what you should change in your resume and how to position yourself to land this job:
+                </p>
+                <div class="space-y-4 pt-1">
+                    {% for item in alignment_advice %}
+                    <div class="flex items-start gap-3.5 p-3.5 rounded-lg bg-slate-900/40 border border-slate-800 text-xs leading-relaxed">
+                        <div class="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center shrink-0 {{ item.color }}">
+                            <i class="fas {{ item.icon }} text-base"></i>
+                        </div>
+                        <div class="space-y-1.5 flex-1">
+                            <h5 class="font-bold text-slate-200 text-sm">{{ item.title }}</h5>
+                            <p class="text-slate-400 text-xs">{{ item.explanation | safe }}</p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- AI Action Verb Suggestions card -->
+            <div class="glass-panel p-5 space-y-4">
+                <h4 class="font-bold text-slate-200 text-sm flex items-center gap-2">
+                    <i class="fas fa-lightbulb text-indigo-400"></i> AI Action Verb Replacements
+                </h4>
+                
+                {% if report.suggestions.get('verb_replacements') %}
+                <div class="overflow-x-auto text-xs">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="text-slate-400 font-semibold border-b border-slate-800">
+                                <th class="pb-2 pr-4">Weak Phrasing Detected</th>
+                                <th class="pb-2">Stronger Action Verbs</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-800/40">
+                            {% for sug in report.suggestions.get('verb_replacements') %}
+                            <tr>
+                                <td class="py-2.5 font-mono text-rose-400 bg-rose-500/5 px-2 rounded">{{ sug.weak }}</td>
+                                <td class="py-2.5 text-emerald-400 pl-4 font-medium"><i class="fas fa-long-arrow-alt-right mr-2 text-slate-500"></i> {{ sug.suggested }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-xs text-slate-500 italic flex items-center gap-1.5">
+                    <i class="fas fa-smile text-emerald-400"></i> Excellent. No weak action verbs detected in your experience descriptions!
+                </p>
+                {% endif %}
+            </div>
+
+            <!-- Structure & General Checks -->
+            <div class="glass-panel p-5 space-y-4">
+                <h4 class="font-bold text-slate-200 text-sm flex items-center gap-2">
+                    <i class="fas fa-list-check text-indigo-400"></i> Formatting & Profile Integrity Checks
+                </h4>
+                
+                <div class="space-y-3">
+                    {% if report.suggestions.get('weak_sections') %}
+                        {% for sect in report.suggestions.get('weak_sections') %}
+                        <div class="flex items-start gap-3 p-3 rounded-lg bg-slate-900/30 border border-slate-800 text-xs">
+                            <span class="px-2 py-0.5 rounded font-bold text-[9px] uppercase tracking-wider
+                                       {% if sect.severity == 'High' %}bg-rose-500/10 text-rose-400 border border-rose-500/20{% elif sect.severity == 'Medium' %}bg-amber-500/10 text-amber-400 border border-amber-500/20{% else %}bg-slate-800 text-slate-400{% endif %}">
+                                {{ sect.severity }}
+                            </span>
+                            <div class="space-y-1">
+                                <h5 class="font-bold text-slate-200">Weak Section: {{ sect.section }}</h5>
+                                <p class="text-slate-400 leading-normal">{{ sect.reason }}</p>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="flex items-center gap-2.5 p-3 rounded-lg bg-emerald-500/5 border border-emerald-500/10 text-xs text-emerald-400">
+                            <i class="fas fa-check-circle"></i>
+                            <span>All core sections (Education, Work Experience, Contact) parsed cleanly. Layout formatting looks highly ATS compliant.</span>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Learning path suggestions -->
+            {% if report.suggestions.get('learning_path') %}
+            <div class="glass-panel p-5 space-y-4">
+                <h4 class="font-bold text-slate-200 text-sm flex items-center gap-2">
+                    <i class="fas fa-graduation-cap text-indigo-400"></i> AI Recommended Topics to Learn
+                </h4>
+                <p class="text-xs text-slate-400 leading-relaxed">Based on your matched profile skills, mastering these technologies can accelerate your career progression:</p>
+                <div class="flex flex-wrap gap-2.5">
+                    {% for item in report.suggestions.get('learning_path') %}
+                    <span class="skill-pill px-3 py-1.5 text-xs rounded-xl font-medium flex items-center gap-1">
+                        <i class="fas fa-arrow-trend-up text-indigo-400 text-[10px]"></i> {{ item }}
+                    </span>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+        </div>
+
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

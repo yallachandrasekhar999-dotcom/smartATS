@@ -1,0 +1,156 @@
+{% extends "base.html" %}
+
+{% block title %}Smart Resume Analyzer & ATS Score Predictor - Home{% endblock %}
+
+{% block header_title %}Landing Page{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto space-y-16 py-8">
+    
+    <!-- Hero Section -->
+    <section class="text-center space-y-6 py-12 animate-fade-in-up">
+        <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-semibold tracking-wide">
+            <i class="fas fa-magic"></i> Powered by advanced NLP & spaCy Engine
+        </div>
+        
+        <h1 class="text-4xl md:text-6xl font-extrabold tracking-tight text-white max-w-4xl mx-auto leading-tight font-sans">
+            Perfect Your Resume. <br/>
+            <span class="text-gradient-primary">Conquer the Applicant Tracking System.</span>
+        </h1>
+        
+        <p class="text-slate-400 text-base md:text-lg max-w-2xl mx-auto leading-relaxed">
+            Upload your resume, analyze it against job descriptions, visualize skill gaps, and export actionable PDF recommendations to maximize your employability.
+        </p>
+        
+        <div class="flex items-center justify-center gap-4 pt-4">
+            {% if current_user.is_authenticated %}
+                <a href="{{ url_for('dashboard') }}" class="glass-panel px-8 py-3.5 bg-indigo-600 hover:bg-indigo-500 border-none font-bold text-white shadow-lg shadow-indigo-600/30 rounded-xl transition flex items-center gap-2 text-sm">
+                    <i class="fas fa-columns"></i> Go to Dashboard
+                </a>
+            {% else %}
+                <a href="{{ url_for('register') }}" class="glass-panel px-8 py-3.5 bg-indigo-600 hover:bg-indigo-500 border-none font-bold text-white shadow-lg shadow-indigo-600/30 rounded-xl transition flex items-center gap-2 text-sm">
+                    Get Started Free <i class="fas fa-arrow-right"></i>
+                </a>
+                <a href="{{ url_for('login') }}" class="glass-panel px-8 py-3.5 bg-slate-800 hover:bg-slate-700/80 font-bold text-slate-200 rounded-xl transition text-sm">
+                    Login Account
+                </a>
+            {% endif %}
+        </div>
+    </section>
+
+    <!-- Interactive UI Mockup section -->
+    <section class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center max-w-5xl mx-auto py-4">
+        <!-- Dashboard Card Preview -->
+        <div class="glass-panel glass-panel-glow p-6 space-y-6">
+            <div class="flex items-center justify-between border-b border-slate-800/80 pb-4">
+                <div class="flex items-center gap-2">
+                    <i class="fas fa-chart-pie text-indigo-400"></i>
+                    <h3 class="font-bold text-slate-200">Live Analysis Demo</h3>
+                </div>
+                <span class="px-2.5 py-1 text-xs font-semibold rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Good Fit</span>
+            </div>
+            
+            <div class="flex items-center justify-between">
+                <div>
+                    <h4 class="text-2xl font-bold text-white">84% <span class="text-sm font-medium text-slate-400">ATS Score</span></h4>
+                    <p class="text-xs text-slate-400 mt-1">Excellent compatibility for DevOps role</p>
+                </div>
+                <!-- Mini Progress circle -->
+                <div class="w-16 h-16 flex items-center justify-center rounded-full bg-slate-900 border-2 border-indigo-500 shadow-lg shadow-indigo-500/20">
+                    <span class="font-bold text-sm text-indigo-400">84%</span>
+                </div>
+            </div>
+            
+            <div class="space-y-3">
+                <h5 class="text-xs font-bold text-slate-300 uppercase tracking-wider">Skill Gap Analysis</h5>
+                <div class="flex flex-wrap gap-2">
+                    <span class="matched-pill px-2.5 py-1 text-[11px] rounded-lg font-medium"><i class="fas fa-check-circle mr-1"></i> Python</span>
+                    <span class="matched-pill px-2.5 py-1 text-[11px] rounded-lg font-medium"><i class="fas fa-check-circle mr-1"></i> Docker</span>
+                    <span class="matched-pill px-2.5 py-1 text-[11px] rounded-lg font-medium"><i class="fas fa-check-circle mr-1"></i> AWS</span>
+                    <span class="missing-pill px-2.5 py-1 text-[11px] rounded-lg font-medium"><i class="fas fa-times-circle mr-1"></i> Kubernetes</span>
+                    <span class="missing-pill px-2.5 py-1 text-[11px] rounded-lg font-medium"><i class="fas fa-times-circle mr-1"></i> CI/CD</span>
+                </div>
+            </div>
+            
+            <div class="bg-indigo-950/20 rounded-xl p-3 border border-indigo-500/10 text-xs text-slate-400 flex items-start gap-2.5">
+                <i class="fas fa-lightbulb text-indigo-400 mt-0.5"></i>
+                <span><strong>AI Suggestion:</strong> Replace weak phrasing like "helped build docker image" with "engineered container pipeline leverage docker".</span>
+            </div>
+        </div>
+
+        <!-- Copywriting Section -->
+        <div class="space-y-6">
+            <h2 class="text-3xl font-extrabold text-white font-sans leading-tight">
+                Designed to give Job Seekers & Recruiters a competitive edge.
+            </h2>
+            <p class="text-slate-400 leading-relaxed">
+                Large corporations rely on automated filters to scan resumes. SmartATS uses standard parser systems to test your document format, extract competencies, and measure relevance against exact job post listings.
+            </p>
+            <div class="space-y-3.5">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 text-sm">
+                        <i class="fas fa-check"></i>
+                    </div>
+                    <span class="text-sm font-semibold text-slate-200">Highlight missing requirements in real time.</span>
+                </div>
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 text-sm">
+                        <i class="fas fa-check"></i>
+                    </div>
+                    <span class="text-sm font-semibold text-slate-200">Recruiter console for parsing hundreds of candidates.</span>
+                </div>
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 text-sm">
+                        <i class="fas fa-check"></i>
+                    </div>
+                    <span class="text-sm font-semibold text-slate-200">Clean, structured layout checks + metrics charts.</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Core Features Grid -->
+    <section class="space-y-8">
+        <div class="text-center space-y-2">
+            <h2 class="text-3xl font-extrabold text-white">Full-Suite Platform Features</h2>
+            <p class="text-slate-400 text-sm">Everything you need to optimize and manage professional profiles.</p>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Feature Card 1 -->
+            <div class="glass-panel p-6 space-y-4">
+                <div class="w-12 h-12 bg-indigo-600/20 border border-indigo-500/30 rounded-xl flex items-center justify-center text-indigo-400 text-xl">
+                    <i class="fas fa-file-upload"></i>
+                </div>
+                <h3 class="text-lg font-bold text-white">Upload & Drag-and-Drop</h3>
+                <p class="text-sm text-slate-400 leading-relaxed">
+                    Instantly upload PDF or DOCX format resumes. Track historical scores and manage multiple version logs within your secure user dashboard.
+                </p>
+            </div>
+            
+            <!-- Feature Card 2 -->
+            <div class="glass-panel p-6 space-y-4">
+                <div class="w-12 h-12 bg-emerald-600/20 border border-emerald-500/30 rounded-xl flex items-center justify-center text-emerald-400 text-xl">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <h3 class="text-lg font-bold text-white">ATS Scoring Engine</h3>
+                <p class="text-sm text-slate-400 leading-relaxed">
+                    Generate an instant matching score based on skill alignment, keyword occurrences, experience density, and structural parameters.
+                </p>
+            </div>
+            
+            <!-- Feature Card 3 -->
+            <div class="glass-panel p-6 space-y-4">
+                <div class="w-12 h-12 bg-amber-600/20 border border-amber-500/30 rounded-xl flex items-center justify-center text-accent text-xl">
+                    <i class="fas fa-file-pdf"></i>
+                </div>
+                <h3 class="text-lg font-bold text-white">Report Generation</h3>
+                <p class="text-sm text-slate-400 leading-relaxed">
+                    Download structured PDF reports summarizing matched skills, critical gaps, structural quality indicators, and action verb improvements.
+                </p>
+            </div>
+        </div>
+    </section>
+
+</div>
+{% endblock %}

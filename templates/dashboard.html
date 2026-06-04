@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+
+{% block title %}Smart ATS - Dashboard{% endblock %}
+
+{% block header_title %}Candidate Dashboard{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto space-y-6 animate-fade-in-up">
+    
+    <!-- Top Stats Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- Card 1 -->
+        <div class="glass-panel p-5 flex items-center justify-between">
+            <div>
+                <span class="text-xs font-semibold text-slate-400 uppercase">Resumes</span>
+                <h3 class="text-2xl font-bold text-white mt-1">{{ total_resumes }}</h3>
+            </div>
+            <div class="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center text-indigo-400">
+                <i class="far fa-file-alt text-lg"></i>
+            </div>
+        </div>
+
+        <!-- Card 2 -->
+        <div class="glass-panel p-5 flex items-center justify-between">
+            <div>
+                <span class="text-xs font-semibold text-slate-400 uppercase">Best Score</span>
+                <h3 class="text-2xl font-bold text-white mt-1">{{ best_score }}%</h3>
+            </div>
+            <div class="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-400">
+                <i class="fas fa-trophy text-lg"></i>
+            </div>
+        </div>
+
+        <!-- Card 3 -->
+        <div class="glass-panel p-5 flex items-center justify-between">
+            <div>
+                <span class="text-xs font-semibold text-slate-400 uppercase">Avg Match Score</span>
+                <h3 class="text-2xl font-bold text-white mt-1">{{ avg_score }}%</h3>
+            </div>
+            <div class="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center text-indigo-400">
+                <i class="fas fa-chart-line text-lg"></i>
+            </div>
+        </div>
+
+        <!-- Card 4 -->
+        <div class="glass-panel p-5 flex items-center justify-between">
+            <div>
+                <span class="text-xs font-semibold text-slate-400 uppercase">Skills Saved</span>
+                <h3 class="text-2xl font-bold text-white mt-1">{{ total_skills }}</h3>
+            </div>
+            <div class="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-accent">
+                <i class="fas fa-graduation-cap text-lg"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Panel Grid -->
+    {% if total_resumes > 0 %}
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Score Trend Line Chart -->
+        <div class="glass-panel p-5 lg:col-span-2 space-y-4">
+            <h4 class="font-bold text-slate-200 text-sm flex items-center gap-2">
+                <i class="fas fa-chart-line text-indigo-400"></i> ATS Score Trend History
+            </h4>
+            <div class="h-64 relative">
+                <canvas id="atsTrendChart" data-trend='{{ trend_data | tojson | safe }}'></canvas>
+            </div>
+        </div>
+
+        <!-- Skill categories distribution -->
+        <div class="glass-panel p-5 space-y-4">
+            <h4 class="font-bold text-slate-200 text-sm flex items-center gap-2">
+                <i class="fas fa-shapes text-indigo-400"></i> Parsed Skill Categories
+            </h4>
+            <div class="h-64 relative flex items-center justify-center">
+                {% if skill_dist and skill_dist.keys()|length > 0 %}
+                    <canvas id="skillDistributionChart" data-distribution='{{ skill_dist | tojson | safe }}'></canvas>
+                {% else %}
+                    <p class="text-xs text-slate-500">No skills parsed yet to categorize.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Resume Version List -->
+    <div class="glass-panel p-6 space-y-4">
+        <div class="flex items-center justify-between border-b border-slate-800/80 pb-4 flex-wrap gap-3">
+            <div>
+                <h3 class="font-bold text-lg text-white">Your Resumes & Score Reports</h3>
+                <p class="text-xs text-slate-400">Analyze templates, download PDF reports, and view historical revisions.</p>
+            </div>
+            <a href="{{ url_for('analyze_resume_route') }}" class="glass-panel px-4 py-2 bg-indigo-600 hover:bg-indigo-500 border-none font-bold text-white text-xs rounded-lg transition shadow-lg shadow-indigo-600/20">
+                <i class="fas fa-plus mr-1"></i> New Analysis
+            </a>
+        </div>
+
+        {% if resumes %}
+        <div class="overflow-x-auto">
+            <table class="w-full text-left glass-table text-sm">
+                <thead>
+                    <tr class="text-slate-400 font-semibold text-xs uppercase">
+                        <th class="py-3.5 px-4 rounded-tl-lg">Resume File</th>
+                        <th class="py-3.5 px-4">Uploaded At</th>
+                        <th class="py-3.5 px-4 text-center">Version</th>
+                        <th class="py-3.5 px-4 text-center">Best Score</th>
+                        <th class="py-3.5 px-4 rounded-tr-lg text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-800/40">
+                    {% for resume in resumes %}
+                    <tr class="hover:bg-slate-800/20 transition-colors">
+                        <td class="py-4 px-4 font-semibold text-slate-200">
+                            <div class="flex items-center gap-3">
+                                {% if resume.filename.endswith('.docx') %}
+                                    <i class="far fa-file-word text-slate-400 text-lg"></i>
+                                {% else %}
+                                    <i class="far fa-file-pdf text-rose-400 text-lg"></i>
+                                {% endif %}
+                                <div class="truncate max-w-xs sm:max-w-md">
+                                    <p class="truncate" title="{{ resume.filename }}">{{ resume.filename }}</p>
+                                    <p class="text-[10px] text-slate-400 font-normal">Parsed Name: {{ resume.parsed_name or 'N/A' }}</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="py-4 px-4 text-slate-400">{{ resume.uploaded_at.strftime('%Y-%b-%d %H:%M') }}</td>
+                        <td class="py-4 px-4 text-center"><span class="px-2 py-0.5 rounded bg-slate-800 border border-slate-700/60 text-xs font-mono">v{{ resume.version }}</span></td>
+                        <td class="py-4 px-4 text-center font-bold text-white">
+                            {% if resume.reports %}
+                                {% set top_report = resume.reports | sort(attribute='score', reverse=true) | first %}
+                                <span class="{% if top_report.score >= 80 %}text-emerald-400{% elif top_report.score >= 50 %}text-amber-400{% else %}text-rose-400{% endif %}">
+                                    {{ top_report.score }}%
+                                </span>
+                            {% else %}
+                                <span class="text-slate-500 font-normal italic">Unscored</span>
+                            {% endif %}
+                        </td>
+                        <td class="py-4 px-4 text-right space-x-1.5 whitespace-nowrap">
+                            <a href="{{ url_for('analyze_resume_route', resume_id=resume.id) }}" class="p-2 text-indigo-400 hover:text-white rounded-lg hover:bg-indigo-600/10 transition" title="Run Analysis Match">
+                                <i class="fas fa-file-invoice"></i> Match JD
+                            </a>
+                            
+                            {% if resume.reports %}
+                                {% set top_report = resume.reports | sort(attribute='score', reverse=true) | first %}
+                                <a href="{{ url_for('download_pdf_report', report_id=top_report.id) }}" class="p-2 text-emerald-400 hover:text-white rounded-lg hover:bg-emerald-600/10 transition" title="Download PDF Report">
+                                    <i class="fas fa-file-pdf"></i> PDF
+                                </a>
+                            {% endif %}
+                            
+                            <a href="{{ url_for('delete_resume', id=resume.id) }}" class="p-2 text-rose-400 hover:text-white rounded-lg hover:bg-rose-500/10 transition" onclick="return confirm('Are you sure you want to delete this resume? All associated reports will be lost.');" title="Delete Resume">
+                                <i class="far fa-trash-alt"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-12 space-y-4">
+            <div class="w-16 h-16 bg-slate-900 rounded-full flex items-center justify-center mx-auto border border-slate-800 text-slate-500">
+                <i class="far fa-folder-open text-2xl"></i>
+            </div>
+            <div>
+                <p class="font-semibold text-slate-300">No resumes found</p>
+                <p class="text-xs text-slate-500 max-w-sm mx-auto">Upload your first resume in the Analyze module to start matching against job descriptions.</p>
+            </div>
+            <a href="{{ url_for('analyze_resume_route') }}" class="glass-panel inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-500 border-none font-semibold text-white rounded-lg text-xs transition">
+                <i class="fas fa-upload"></i> Upload & Analyze
+            </a>
+        </div>
+        {% endif %}
+    </div>
+
+</div>
+{% endblock %}
