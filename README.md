@@ -1,45 +1,51 @@
-# 🎓 ExamSync - Online Examination Management System
+# 📄 Smart ATS Resume Analyzer
 
 ## 🚀 Live Demo
 
-🌐 **Website:** https://examsync-csyj.onrender.com
+🌐 https://smartats-ipuq.onrender.com
 
 ## 📌 Overview
 
-ExamSync is a modern web-based Online Examination Management System designed to streamline the process of conducting, managing, and evaluating examinations. The platform provides a secure and user-friendly environment for administrators, faculty, and students to manage assessments efficiently.
+Smart ATS Resume Analyzer is an AI-powered web application designed to help job seekers optimize their resumes for Applicant Tracking Systems (ATS). The platform analyzes uploaded resumes against job descriptions, provides an ATS compatibility score, identifies missing keywords, and offers actionable suggestions to improve interview selection chances.
 
-The system automates exam creation, student participation, result generation, and performance tracking, reducing manual effort and improving accuracy in examination management.
+The application helps candidates create ATS-friendly resumes that align with modern recruitment systems used by companies worldwide.
+
+---
 
 ## ✨ Features
 
-### 👨‍🎓 Student Module
+### 📄 Resume Analysis
 
-* Student Registration & Login
-* Secure Authentication
-* View Available Exams
-* Attend Online Exams
-* Instant Result Generation
-* Performance Analysis Dashboard
-* Responsive User Interface
+* Upload Resume in PDF Format
+* AI-Powered Resume Evaluation
+* ATS Compatibility Scoring
+* Detailed Resume Feedback
+* Resume Strength Assessment
 
-### 👨‍🏫 Admin Module
+### 🎯 Job Description Matching
 
-* Admin Dashboard
-* Create & Manage Exams
-* Add, Edit, and Delete Questions
-* Manage Student Records
-* View Examination Statistics
-* Monitor Exam Performance
-* Generate Results Automatically
+* Compare Resume with Job Description
+* Keyword Gap Analysis
+* Skill Matching Evaluation
+* Missing Keyword Identification
+* Relevance Score Generation
 
-### 📊 Examination Features
+### 🤖 AI Insights
 
-* Multiple Choice Questions (MCQs)
-* Timer-Based Exams
-* Automatic Evaluation
-* Real-Time Score Calculation
-* Detailed Result Reports
-* Secure Exam Environment
+* Smart Recommendations
+* Resume Improvement Suggestions
+* Professional Feedback Generation
+* Content Optimization Tips
+* Industry-Relevant Keyword Suggestions
+
+### 📊 Analytics Dashboard
+
+* ATS Score Visualization
+* Match Percentage Analysis
+* Resume Performance Metrics
+* Improvement Tracking
+
+---
 
 ## 🛠️ Tech Stack
 
@@ -54,30 +60,32 @@ The system automates exam creation, student participation, result generation, an
 * Python
 * Flask
 
-### Database
+### AI Integration
 
-* SQLite
+* Generative AI API
+* Natural Language Processing (NLP)
 
 ### Deployment
 
 * Render
 
+---
+
 ## 📂 Project Structure
 
 ```bash
-ExamSync/
+Smart-ATS/
 │
 ├── static/
 │   ├── css/
 │   ├── js/
-│   └── images/
+│   └── assets/
 │
 ├── templates/
 │   ├── index.html
-│   ├── login.html
-│   ├── register.html
-│   ├── dashboard.html
-│   └── exam.html
+│   ├── upload.html
+│   ├── result.html
+│   └── dashboard.html
 │
 ├── app.py
 ├── requirements.txt
@@ -85,13 +93,15 @@ ExamSync/
 └── README.md
 ```
 
+---
+
 ## ⚙️ Installation
 
 ### Clone Repository
 
 ```bash
-git clone https://github.com/yourusername/examsync.git
-cd examsync
+git clone https://github.com/yourusername/smart-ats.git
+cd smart-ats
 ```
 
 ### Create Virtual Environment
@@ -100,7 +110,7 @@ cd examsync
 python -m venv venv
 ```
 
-### Activate Virtual Environment
+### Activate Environment
 
 Windows:
 
@@ -126,55 +136,68 @@ pip install -r requirements.txt
 python app.py
 ```
 
-Application will run at:
+Open:
 
 ```bash
 http://localhost:5000
 ```
 
+---
+
 ## 🎯 Key Benefits
 
-* Reduces manual examination workload
-* Instant result processing
-* Improved accuracy and transparency
-* Easy exam management
-* User-friendly interface
-* Accessible from any device
+* Improves Resume ATS Compatibility
+* Increases Interview Selection Chances
+* Identifies Missing Skills and Keywords
+* Provides Instant AI Feedback
+* Saves Time During Job Applications
+* Helps Create Recruiter-Friendly Resumes
+
+---
 
 ## 🔒 Security Features
 
-* Secure User Authentication
-* Session Management
-* Protected Admin Access
-* Data Validation
+* Secure File Upload Handling
+* PDF Validation
+* Input Sanitization
 * Error Handling Mechanisms
+* Safe Resume Processing
+
+---
 
 ## 📸 Screenshots
 
 Add screenshots of:
 
 * Home Page
-* Student Dashboard
-* Admin Dashboard
-* Exam Interface
-* Result Page
+* Resume Upload Interface
+* ATS Analysis Dashboard
+* Match Score Results
+* AI Recommendations Section
+
+---
 
 ## 🌟 Future Enhancements
 
-* AI-Based Proctoring
-* Email Notifications
-* Certificate Generation
-* Question Randomization
-* Advanced Analytics Dashboard
-* Cloud Database Integration
-* Mobile Application Support
+* Multiple Resume Templates
+* Resume Builder Integration
+* LinkedIn Profile Analysis
+* Cover Letter Generator
+* Interview Question Prediction
+* Skill Gap Assessment
+* Career Recommendation System
+* Multi-Language Resume Support
+
+---
 
 ## 👨‍💻 Author
 
 **Chandrasekhar Yalla**
 
-Aspiring Software Developer passionate about building scalable web applications and solving real-world problems through technology.
+Aspiring Software Developer passionate about Artificial Intelligence, Cloud Computing, Full-Stack Development, and building impactful solutions that solve real-world problems.
+
+---
 
 ## 📜 License
 
-This project is developed for educational and learning purposes.
+This project is developed for educational, learning, and portfolio purposes.
