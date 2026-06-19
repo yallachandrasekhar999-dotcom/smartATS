@@ -26,6 +26,16 @@ def setup_nlp():
 # Run NLP setup on initialization
 setup_nlp()
 
+# spaCy model check
+try:
+    spacy.load("en_core_web_sm")
+    print("spaCy 'en_core_web_sm' model is already installed.")
+except OSError:
+    print("Downloading spaCy 'en_core_web_sm' model...")
+    import subprocess
+    import sys
+    subprocess.run([sys.executable, "-m", "spacy", "download", "en_core_web_sm"], capture_output=True)
+
 # Load spaCy NLP model
 nlp = spacy.load('en_core_web_sm')
 from nltk.corpus import stopwords
@@ -119,9 +129,23 @@ def extract_text(file_path):
     """Extracts text depending on the file extension."""
     ext = os.path.splitext(file_path)[1].lower()
     if ext == '.pdf':
-        return extract_text_from_pdf(file_path)
+        text = extract_text_from_pdf(file_path)
+        if not text:
+            try:
+                with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                    text = f.read()
+            except:
+                pass
+        return text
     elif ext == '.docx':
-        return extract_text_from_docx(file_path)
+        text = extract_text_from_docx(file_path)
+        if not text:
+            try:
+                with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                    text = f.read()
+            except:
+                pass
+        return text
     else:
         return ""
 
@@ -255,8 +279,8 @@ def extract_sections(text):
         'Certifications': []
     }
     
-    education_keywords = ['education', 'academic background', 'qualification', 'academic credentials', 'academic profile']
-    experience_keywords = ['experience', 'employment history', 'work history', 'professional background', 'career history', 'work experience', 'internship']
+    education_keywords = ['education', 'academic background', 'qualification', 'qualifications', 'academic credentials', 'academic profile', 'educational']
+    experience_keywords = ['experience', 'employment history', 'work history', 'professional background', 'career history', 'work experience', 'internship', 'internships']
     cert_keywords = ['certification', 'certifications', 'licenses', 'credentials', 'courses', 'coursework']
     
     current_section = None
@@ -269,16 +293,16 @@ def extract_sections(text):
         # Check for headings
         line_lower = line_clean.lower()
         
-        # Simple heading detection: line is short and matches keywords
+        # Robust heading detection: line is short and contains keywords as separate words
         is_heading = False
-        if len(line_clean) < 40:
-            if any(kw == line_lower or line_lower.startswith(kw) for kw in experience_keywords):
+        if len(line_clean) < 60:
+            if any(re.search(r'\b' + re.escape(kw) + r'\b', line_lower) for kw in experience_keywords):
                 current_section = 'Experience'
                 is_heading = True
-            elif any(kw == line_lower or line_lower.startswith(kw) for kw in education_keywords):
+            elif any(re.search(r'\b' + re.escape(kw) + r'\b', line_lower) for kw in education_keywords):
                 current_section = 'Education'
                 is_heading = True
-            elif any(kw == line_lower or line_lower.startswith(kw) for kw in cert_keywords):
+            elif any(re.search(r'\b' + re.escape(kw) + r'\b', line_lower) for kw in cert_keywords):
                 current_section = 'Certifications'
                 is_heading = True
                 

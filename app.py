@@ -8,7 +8,7 @@ from flask_bcrypt import Bcrypt
 from config import Config
 from models import db, User, Resume, Skill, JobDescription, ATSReport, JobPosting
 from parser import parse_resume, parse_job_description
-from recommender import calculate_ats_score, analyze_resume_suggestions, recommend_jobs, generate_alignment_advice
+from recommender import calculate_ats_score, calculate_general_ats_score, analyze_resume_suggestions, recommend_jobs, generate_alignment_advice
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -174,13 +174,17 @@ def analyze_resume_route():
             # Sort reports by score descending
             sorted_reports = sorted(resume.reports, key=lambda x: x.score, reverse=True)
             report = sorted_reports[0]
+            is_general = (report.job_description.title == "General Software Benchmark") if report.job_description else True
             alignment_advice = generate_alignment_advice(
                 report.matched_skills,
                 report.missing_skills,
-                report.suggestions.get('weak_sections', [])
+                report.suggestions.get('weak_sections', []),
+                is_general=is_general
             )
             return render_template('analyze.html', report=report, resume=resume, sample_jobs=sample_jobs, select_resumes=select_resumes, alignment_advice=alignment_advice)
+            
     if request.method == 'POST':
+        analysis_type = request.form.get('analysis_type', 'job_description')
         jd_text = request.form.get('job_description')
         existing_id = request.form.get('existing_resume_id')
         track_version = request.form.get('track_version') == 'on'
@@ -251,26 +255,39 @@ def analyze_resume_route():
             db.session.add(resume)
             db.session.commit()
             
-        # Parse Job Description
-        jd_data = parse_job_description(jd_text)
-        
-        # Calculate ATS score match
-        score_result = calculate_ats_score(parsed_data, jd_data)
-        
-        # Generate suggestions
-        suggestions_data = analyze_resume_suggestions(parsed_data)
-        # Inject detailed scoring breakdown for charts
-        suggestions_data['breakdown'] = score_result['breakdown']
-        
-        # Create JobDescription DB entry
-        jd_obj = JobDescription(
-            title="Matched Target Profile",
-            raw_text=jd_text,
-            extracted_skills=jd_data['skills']
-        )
-        db.session.add(jd_obj)
-        db.session.commit()
-        
+        # 1. Option 1: General software engineering checklist (Check ATS Score)
+        if analysis_type == 'general':
+            score_result = calculate_general_ats_score(parsed_data)
+            suggestions_data = analyze_resume_suggestions(parsed_data)
+            suggestions_data['breakdown'] = score_result['breakdown']
+            
+            jd_obj = JobDescription(
+                title="General Software Benchmark",
+                raw_text="General Software Engineering ATS Score Profile Benchmark",
+                extracted_skills_raw="[]"
+            )
+            db.session.add(jd_obj)
+            db.session.commit()
+            
+        # 2. Option 2: Job description specific match (Check ATS Score With Job Description)
+        else:
+            if not jd_text or jd_text.strip() == "":
+                flash("Job description text is required for this match option.", "danger")
+                return redirect(url_for('analyze_resume_route'))
+                
+            jd_data = parse_job_description(jd_text)
+            score_result = calculate_ats_score(parsed_data, jd_data)
+            suggestions_data = analyze_resume_suggestions(parsed_data)
+            suggestions_data['breakdown'] = score_result['breakdown']
+            
+            jd_obj = JobDescription(
+                title="Matched Target Profile",
+                raw_text=jd_text,
+                extracted_skills=jd_data['skills']
+            )
+            db.session.add(jd_obj)
+            db.session.commit()
+            
         # Create ATS Report
         report = ATSReport(
             user_id=current_user.id,
@@ -290,10 +307,12 @@ def analyze_resume_route():
         
     alignment_advice = None
     if report:
+        is_general = (report.job_description.title == "General Software Benchmark") if report.job_description else True
         alignment_advice = generate_alignment_advice(
             report.matched_skills,
             report.missing_skills,
-            report.suggestions.get('weak_sections', [])
+            report.suggestions.get('weak_sections', []),
+            is_general=is_general
         )
         
     return render_template('analyze.html', report=report, resume=resume, sample_jobs=sample_jobs, select_resumes=select_resumes, alignment_advice=alignment_advice)

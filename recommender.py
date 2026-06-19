@@ -249,7 +249,7 @@ def recommend_jobs(user_skills, job_postings):
     return recommendations
 
 
-def generate_alignment_advice(matched_skills, missing_skills, weak_sections):
+def generate_alignment_advice(matched_skills, missing_skills, weak_sections, is_general=False):
     """
     Compiles detailed strategy guides, section corrections, and bullet point refactoring
     advices based on what is missing to secure a job match.
@@ -260,11 +260,12 @@ def generate_alignment_advice(matched_skills, missing_skills, weak_sections):
     if missing_skills:
         skills_subset = missing_skills[:4]
         skills_str = ", ".join(skills_subset)
+        source_name = "Industry benchmarks highlight key developer" if is_general else "The job description highlights"
         advice_items.append({
             'title': 'Integrate Missing Critical Skills',
             'icon': 'fa-lightbulb',
             'color': 'text-amber-400',
-            'explanation': f"The job description highlights requirements for: <b>{skills_str}</b>. Add these keywords to your main 'Skills' section. Furthermore, describe a past project or course where you used these tools to ensure the ATS scores them."
+            'explanation': f"{source_name} requirements for: <b>{skills_str}</b>. Add these keywords to your main 'Skills' section. Furthermore, describe a past project or course where you used these tools to ensure the ATS scores them."
         })
         
         # Rewrite bullet points formatting examples
@@ -303,16 +304,119 @@ def generate_alignment_advice(matched_skills, missing_skills, weak_sections):
         strategy_bullets.append(f"<li class='ml-4 list-disc mt-1'><b>Leverage matched skills</b>: Double-down on your experience with <b>{best_skill}</b> in interviews. Tell stories showing quantified achievements.</li>")
     if missing_skills:
         missing_skill = missing_skills[0]
-        strategy_bullets.append(f"<li class='ml-4 list-disc mt-1'><b>Address skill gaps</b>: Proactively spend a weekend building a small sandbox project using <b>{missing_skill}</b> and add it to your portfolio to secure the role.</li>")
+        rec_tip = "build a small sandbox project using" if not is_general else "gain foundational familiarity with"
+        strategy_bullets.append(f"<li class='ml-4 list-disc mt-1'><b>Address skill gaps</b>: Proactively <b>{rec_tip} {missing_skill}</b> and add it to your portfolio to secure the role.</li>")
     else:
         strategy_bullets.append("<li class='ml-4 list-disc mt-1'><b>Stand out</b>: Since you match all core skills, focus on adding numeric metrics (budget size, performance speeds) to outrank other applicants.</li>")
         
     advice_items.append({
-        'title': 'How to Get This Job - Strategic Roadmap',
+        'title': 'How to Optimize Your Profile - Strategic Roadmap' if is_general else 'How to Get This Job - Strategic Roadmap',
         'icon': 'fa-play-circle',
         'color': 'text-emerald-400',
-        'explanation': f"Follow this advice to secure the interview:<ul class='mt-1 space-y-1'>" + "".join(strategy_bullets) + "</ul>"
+        'explanation': (f"Follow this advice to align with industry expectations:<ul class='mt-1 space-y-1'>" + "".join(strategy_bullets) + "</ul>") if is_general else (f"Follow this advice to secure the interview:<ul class='mt-1 space-y-1'>" + "".join(strategy_bullets) + "</ul>")
     })
     
     return advice_items
+
+
+def calculate_general_ats_score(resume_data):
+    """
+    Computes a general ATS score for software engineering resumes (Enhancv style).
+    No Job Description is required. Checks formatting, contact details, action verbs, and skill density.
+    """
+    raw_text = resume_data.get('raw_text', '')
+    resume_skills = set(s.lower() for s in resume_data.get('skills', []))
+    
+    # 1. Skill Density (25 points max)
+    # Continuous mapping based on actual skill count
+    skill_count = len(resume_skills)
+    skill_score = min(25.0, skill_count * 2.0)
+        
+    # 2. Action Verbs & Metrics - Keywords (25 points max)
+    # Action verbs score (Max 12.0 points): Deduct points for weak action verbs
+    suggestions = analyze_resume_suggestions(resume_data)
+    weak_verbs_count = len(suggestions.get('verb_replacements', []))
+    verb_component = max(3.0, 12.0 - (weak_verbs_count * 1.5))
+    
+    # Metrics/Achievements score (Max 13.0 points): Scan raw text for business or performance metrics
+    metrics_component = 3.0
+    raw_text_lower = raw_text.lower()
+    # Require suffixes like %, +, k, m, etc. or dollar signs, to prevent matching plain years and phone numbers
+    metric_pattern = r'\b\d+(?:\s*%|\s*\+|\s*k\b|\s*m\b|\s*percent\b|\s*million\b|\s*db\b)|\$\d+'
+    metrics_found = re.findall(metric_pattern, raw_text_lower)
+    metrics_count = len(metrics_found)
+    metrics_component = min(13.0, 3.0 + (metrics_count * 4.0))
+        
+    keyword_score = verb_component + metrics_component
+    
+    # 3. Structure, Format & Length (25 points max)
+    # Sections presence and depth (Max 17.0 points)
+    exp_len = len(resume_data.get('experience', []))
+    edu_len = len(resume_data.get('education', []))
+    cert_len = len(resume_data.get('certifications', []))
+    
+    exp_score = min(7.0, exp_len * 2.0)
+    edu_score = min(7.0, edu_len * 3.0)
+    cert_score = min(3.0, cert_len * 1.5)
+    section_component = exp_score + edu_score + cert_score
+        
+    # Word count length quality (Max 8.0 points)
+    words = raw_text.split()
+    word_count = len(words)
+    if word_count == 0:
+        length_component = 1.0
+    else:
+        # Penalize deviation from the optimal length (600 words)
+        length_component = max(2.0, 8.0 - (abs(word_count - 600) / 80.0))
+        
+    struct_score = section_component + length_component
+    
+    # 4. Contact Details (20 points)
+    contact_score = 0.0
+    if resume_data.get('email'):
+        contact_score += 7.0
+    if resume_data.get('phone'):
+        contact_score += 7.0
+    if resume_data.get('name') and resume_data.get('name') != "Candidate Name Not Found":
+        contact_score += 6.0
+        
+    total_score = round(skill_score + keyword_score + struct_score + contact_score, 1)
+    # Limit score to 100.0 max
+    total_score = min(100.0, total_score)
+    
+    # Categorization
+    if total_score >= 80.0:
+        category = 'Excellent'
+    elif total_score >= 60.0:
+        category = 'Good'
+    elif total_score >= 40.0:
+        category = 'Average'
+    else:
+        category = 'Needs Improvement'
+        
+    # Determine general software matched/missing skills
+    GENERAL_BENCHMARK = ['Git', 'Docker', 'AWS', 'SQL', 'CI/CD', 'Agile', 'Unit Testing', 'GitHub']
+    matched_skills = []
+    missing_skills = []
+    
+    # Check candidate skills against standard benchmarks
+    for sk in resume_data.get('skills', []):
+        matched_skills.append(sk)
+        
+    for s in GENERAL_BENCHMARK:
+        if s.lower() not in resume_skills:
+            missing_skills.append(s)
+            
+    return {
+        'score': total_score,
+        'category': category,
+        'matched_skills': matched_skills,
+        'missing_skills': missing_skills,
+        'breakdown': {
+            'skills': round(skill_score, 1),
+            'keywords': round(keyword_score, 1),
+            'structure': round(struct_score, 1),
+            'contact': round(contact_score, 1)
+        }
+    }
 

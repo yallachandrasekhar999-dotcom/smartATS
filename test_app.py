@@ -4,7 +4,7 @@ import json
 from app import app, db
 from models import User, Resume, JobDescription, ATSReport, JobPosting
 from parser import extract_name, extract_contact_info, extract_skills, extract_sections
-from recommender import calculate_ats_score, analyze_resume_suggestions
+from recommender import calculate_ats_score, calculate_general_ats_score, analyze_resume_suggestions
 
 class TestResumeAnalyzer(unittest.TestCase):
     
@@ -179,6 +179,56 @@ class TestResumeAnalyzer(unittest.TestCase):
         }, follow_redirects=True)
         self.assertIn(b"Welcome to the Admin Console!", response.data)
         self.assertIn(b"Admin Control Panel", response.data)
+
+    def test_calculate_general_ats_score(self):
+        resume_data = {
+            'skills': ['Python', 'Flask', 'SQL', 'Docker', 'Git'],
+            'raw_text': 'I have python and flask developer skills. Email: john@gmail.com Phone: 555-555-5555 Name: John Doe',
+            'experience': ['Worked 2 years'],
+            'education': ['B.S. CS'],
+            'email': 'john@gmail.com',
+            'phone': '555-555-5555',
+            'name': 'John Doe'
+        }
+        res = calculate_general_ats_score(resume_data)
+        self.assertGreaterEqual(res['score'], 50.0)
+        self.assertIn('Git', res['matched_skills'])
+        self.assertIn('AWS', res['missing_skills']) # Missing from resume but in standard benchmarks
+
+    def test_analyze_route_general(self):
+        # Login test user
+        with self.client.session_transaction() as sess:
+            sess['_user_id'] = str(self.user_id)
+            sess['_fresh'] = True
+
+        # Mock resume upload
+        import io
+        response = self.client.post('/analyze', data={
+            'analysis_type': 'general',
+            'resume_file': (io.BytesIO(b"John Doe\nEmail: john@gmail.com\nPhone: 555-555-5555\nSkills: python, git"), 'resume.pdf'),
+            'track_version': 'on'
+        }, follow_redirects=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b"General Software Benchmark", response.data)
+        self.assertIn(b"ATS Score prediction completed successfully!", response.data)
+
+    def test_analyze_route_jd(self):
+        # Login test user
+        with self.client.session_transaction() as sess:
+            sess['_user_id'] = str(self.user_id)
+            sess['_fresh'] = True
+
+        # Mock resume upload
+        import io
+        response = self.client.post('/analyze', data={
+            'analysis_type': 'job_description',
+            'resume_file': (io.BytesIO(b"John Doe\nEmail: john@gmail.com\nPhone: 555-555-5555\nSkills: python, git"), 'resume.pdf'),
+            'job_description': 'We need a developer who knows python, docker, git.',
+            'track_version': 'on'
+        }, follow_redirects=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b"Matched Target Profile", response.data)
+        self.assertIn(b"ATS Score prediction completed successfully!", response.data)
 
 
 if __name__ == '__main__':

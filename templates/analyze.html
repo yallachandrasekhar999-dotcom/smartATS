@@ -11,11 +11,23 @@
     <!-- Input Phase: Upload Form -->
     <div class="glass-panel p-6 max-w-3xl mx-auto space-y-6">
         <div>
-            <h3 class="font-bold text-lg text-white">Upload Resume & Paste Job Description</h3>
-            <p class="text-xs text-slate-400">Match your resume's skills, structure, and keywords against exact requirements.</p>
+            <h3 class="font-bold text-lg text-white" id="form-title">Analyze Resume</h3>
+            <p class="text-xs text-slate-400" id="form-subtitle">Choose an evaluation method below to predict your resume's compatibility.</p>
+        </div>
+
+        <!-- Analysis Option Switcher Tabs -->
+        <div class="grid grid-cols-2 gap-2 p-1 bg-slate-950 rounded-xl border border-slate-800">
+            <button type="button" id="btn-general" class="py-2.5 px-4 text-center rounded-lg text-xs font-bold transition flex items-center justify-center gap-2 bg-indigo-600 text-white shadow-lg shadow-indigo-600/15">
+                <i class="fas fa-calculator text-sm"></i> 1. Check ATS Score
+            </button>
+            <button type="button" id="btn-jd" class="py-2.5 px-4 text-center rounded-lg text-xs font-bold transition flex items-center justify-center gap-2 text-slate-400 hover:text-white">
+                <i class="fas fa-file-invoice text-sm"></i> 2. Check ATS Score With Job Description
+            </button>
         </div>
 
         <form action="{{ url_for('analyze_resume_route') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
+            <input type="hidden" name="analysis_type" id="analysis-type" value="general">
+            
             <!-- File Uploader Drag and Drop -->
             <div class="space-y-2">
                 <label class="text-xs font-semibold text-slate-300">Resume Document (PDF or DOCX)</label>
@@ -53,8 +65,8 @@
                 {% endif %}
             </div>
 
-            <!-- Job Description -->
-            <div class="space-y-2">
+            <!-- Job Description (Toggleable) -->
+            <div id="jd-container" class="hidden space-y-2">
                 <div class="flex items-center justify-between">
                     <label for="job-desc" class="text-xs font-semibold text-slate-300">Job Description Requirements</label>
                     
@@ -72,7 +84,7 @@
                     </div>
                     {% endif %}
                 </div>
-                <textarea id="job-desc" name="job_description" rows="7" required class="glass-input p-3 w-full text-sm leading-relaxed" placeholder="Paste the job description details here, including responsibilities, requirements, technologies, and educational qualifications..."></textarea>
+                <textarea id="job-desc" name="job_description" rows="7" class="glass-input p-3 w-full text-sm leading-relaxed" placeholder="Paste the job description details here, including responsibilities, requirements, technologies, and educational qualifications..."></textarea>
             </div>
 
             <!-- Version Checkbox -->
@@ -81,8 +93,8 @@
                 <label for="track-version" class="text-xs text-slate-400 select-none cursor-pointer">Increment resume version number if re-uploading the same file name</label>
             </div>
 
-            <button type="submit" class="glass-panel w-full py-3 bg-indigo-600 hover:bg-indigo-500 border-none font-bold text-white transition text-sm rounded-lg shadow-lg shadow-indigo-600/25 flex items-center justify-center gap-2">
-                <i class="fas fa-calculator"></i> Run ATS Match Predictor
+            <button type="submit" id="submit-btn" class="glass-panel w-full py-3 bg-indigo-600 hover:bg-indigo-500 border-none font-bold text-white transition text-sm rounded-lg shadow-lg shadow-indigo-600/25 flex items-center justify-center gap-2">
+                <i class="fas fa-calculator"></i> Check ATS Score
             </button>
         </form>
     </div>
@@ -98,7 +110,7 @@
             </a>
             <div>
                 <h3 class="font-bold text-sm text-slate-200">Analysis Result: {{ resume.filename }}</h3>
-                <p class="text-[10px] text-slate-400 font-mono">Matched against: {{ report.job_description.title or 'Custom JD' }} (v{{ resume.version }})</p>
+                <p class="text-[10px] text-slate-400 font-mono">Matched against: {{ report.job_description.title if report.job_description else 'General Software Benchmark' }} (v{{ resume.version }})</p>
             </div>
         </div>
         
@@ -335,4 +347,51 @@
     {% endif %}
 
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const btnGeneral = document.getElementById('btn-general');
+    const btnJd = document.getElementById('btn-jd');
+    const jdContainer = document.getElementById('jd-container');
+    const analysisType = document.getElementById('analysis-type');
+    const jobDesc = document.getElementById('job-desc');
+    const submitBtn = document.getElementById('submit-btn');
+    
+    if (btnGeneral && btnJd && jdContainer && analysisType && jobDesc && submitBtn) {
+        btnGeneral.addEventListener('click', function () {
+            // Update tabs active state classes
+            btnGeneral.className = "py-2.5 px-4 text-center rounded-lg text-xs font-bold transition flex items-center justify-center gap-2 bg-indigo-600 text-white shadow-lg shadow-indigo-600/15";
+            btnJd.className = "py-2.5 px-4 text-center rounded-lg text-xs font-bold transition flex items-center justify-center gap-2 text-slate-400 hover:text-white";
+            
+            // Toggle visibility
+            jdContainer.classList.add('hidden');
+            
+            // Set hidden field value and remove required attribute
+            analysisType.value = "general";
+            jobDesc.removeAttribute('required');
+            
+            // Update button label
+            submitBtn.innerHTML = '<i class="fas fa-calculator"></i> Check ATS Score';
+        });
+        
+        btnJd.addEventListener('click', function () {
+            // Update tabs active state classes
+            btnJd.className = "py-2.5 px-4 text-center rounded-lg text-xs font-bold transition flex items-center justify-center gap-2 bg-indigo-600 text-white shadow-lg shadow-indigo-600/15";
+            btnGeneral.className = "py-2.5 px-4 text-center rounded-lg text-xs font-bold transition flex items-center justify-center gap-2 text-slate-400 hover:text-white";
+            
+            // Toggle visibility
+            jdContainer.classList.remove('hidden');
+            
+            // Set hidden field value and add required attribute
+            analysisType.value = "job_description";
+            jobDesc.setAttribute('required', 'true');
+            
+            // Update button label
+            submitBtn.innerHTML = '<i class="fas fa-calculator"></i> Check ATS Score With Job Description';
+        });
+    }
+});
+</script>
 {% endblock %}
